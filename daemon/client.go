@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -24,8 +25,13 @@ func (c *Client) Post(url string, contentType string, body io.Reader) (*http.Res
 }
 
 func (c *Client) Notify(name string) error {
-	if _, err := c.Post("http://unix/"+name, "", nil); err != nil {
+	res, err := c.Post("http://unix/"+name, "", nil)
+	if err != nil {
 		return err
+	}
+
+	if res.StatusCode >= 400 {
+		return fmt.Errorf("request failed with status: %s", res.Status)
 	}
 
 	return nil

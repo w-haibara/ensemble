@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -30,7 +31,7 @@ func deploy() {
 
 			[Service]
 			Type=exec
-			ExecStart=/bin/bash -c "ensemble notify task-name"
+			ExecStart=/bin/bash -c "ensemble notify task-01"
 
 			[Install]
 			WantedBy=default.target
@@ -43,6 +44,15 @@ func deploy() {
 }
 
 func notify(name string) {
+	logfile := "/tmp/ensemble.log"
+	f, err := os.OpenFile(logfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		panic(fmt.Sprint("open", logfile, "failed:", err.Error()))
+	}
+	defer f.Close()
+
+	log.SetOutput(f)
+
 	c := daemon.NewClient()
 	if err := c.Notify(name); err != nil {
 		log.Fatalln(err)

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 var unixDomainSockPath = filepath.Join(os.TempDir(), "ensemble.sock")
@@ -22,9 +23,18 @@ func Serve() error {
 		log.Fatalln(err)
 	}
 
-	h := func(_ http.ResponseWriter, r *http.Request) {
-		log.Println(r.URL)
-	}
+	return http.Serve(l, http.HandlerFunc(handler))
+}
 
-	return http.Serve(l, http.HandlerFunc(h))
+func handler(w http.ResponseWriter, r *http.Request) {
+	task := strings.TrimPrefix(r.URL.String(), "/")
+	log.Println("task:", task)
+
+	switch task {
+	case "task-01":
+		log.Println("start task-01")
+	default:
+		log.Println("unkown task name:", task)
+		w.WriteHeader(http.StatusUnprocessableEntity)
+	}
 }
