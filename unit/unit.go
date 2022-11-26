@@ -1,6 +1,7 @@
 package unit
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -8,7 +9,22 @@ import (
 	"strings"
 )
 
-const systemdUnitFilesDirPath = "/home/lima.linux/.config/systemd/user"
+var systemdUnitFilesDirPath = ""
+
+func init() {
+	path, err := os.UserConfigDir()
+	if err != nil {
+		panic(fmt.Sprint("os.UserConfigDir() failed:", err.Error()))
+	}
+
+	SetSystemdUnitFileDirPath(filepath.Join(path, "systemd", "user"))
+
+	log.Println("systemd unit file dir path:", systemdUnitFilesDirPath)
+}
+
+func SetSystemdUnitFileDirPath(path string) {
+	systemdUnitFilesDirPath = path
+}
 
 type Unit struct {
 	Name string
