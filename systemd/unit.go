@@ -1,4 +1,4 @@
-package unit
+package systemd
 
 import (
 	"fmt"
@@ -39,6 +39,13 @@ func Start(units []Unit) error {
 	}
 
 	if err := run(systemctlReloadSaemonCommand()); err != nil {
+		return err
+	}
+
+	env := Env{
+		"PATH": os.Getenv("PATH"),
+	}
+	if err := run(systemctlSetEnviromentCommand(env)); err != nil {
 		return err
 	}
 
@@ -83,11 +90,13 @@ func createUnitFile(body []byte, path string) error {
 func run(cmd *exec.Cmd) error {
 	log.Println("exec command:", strings.Join(cmd.Args, " "))
 	b, err := cmd.CombinedOutput()
+	if len(b) > 0 {
+		log.Println("=== command output ===\n", string(b))
+		log.Println("======================")
+	}
 	if err != nil {
 		return err
 	}
-	log.Println("=== command output ===\n", string(b))
-	log.Println("======================")
 	return nil
 }
 
@@ -97,4 +106,14 @@ func systemctlReloadSaemonCommand() *exec.Cmd {
 
 func systemctlRestartUnitCommand(unit string) *exec.Cmd {
 	return exec.Command("systemctl", "--user", "restart", unit)
+}
+
+func systemctlSetEnviromentCommand(env Env) *exec.Cmd {
+	return exec.Command(
+		"systemctl",
+		append(
+			[]string{"--user", "set-environment"},
+			env.Strings()...,
+		)...,
+	)
 }
