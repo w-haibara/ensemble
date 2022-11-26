@@ -14,7 +14,7 @@ func main() {
 	case "deploy":
 		deploy()
 	case "notify":
-		notify()
+		notify(os.Args[2])
 	case "serve":
 		serve()
 	}
@@ -42,9 +42,9 @@ func deploy() {
 	}
 }
 
-func notify() {
+func notify(name string) {
 	c := daemon.NewClient()
-	if err := c.Notify(os.Args[2]); err != nil {
+	if err := c.Notify(name); err != nil {
 		log.Fatalln(err)
 	}
 }
