@@ -1,21 +1,20 @@
 package docker
 
-import (
-	doc "github.com/docker/docker/client"
-)
+import "os/exec"
 
 type Client struct {
-	docker *doc.Client
 }
 
 func NewClient() (*Client, error) {
-	cli, err := doc.NewClientWithOpts(
-		doc.FromEnv,
-		doc.WithAPIVersionNegotiation(),
-	)
+
+	return &Client{}, nil
+}
+
+func ExecCmd(cmd *exec.Cmd) (string, error) {
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, err
+		return string(out), err
 	}
 
-	return &Client{cli}, nil
+	return "", nil
 }

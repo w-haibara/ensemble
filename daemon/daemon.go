@@ -59,7 +59,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	case "container-remove":
-		if err := client.ContainerRemove(ctx, request); err != nil {
+		if err := client.ContainerRm(ctx, request); err != nil {
 			log.Println("container-remove failed:", err)
 			w.WriteHeader(http.StatusInternalServerError)
 		}

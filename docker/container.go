@@ -3,10 +3,10 @@ package docker
 import (
 	"context"
 	"errors"
-	"time"
+	"log"
+	"strconv"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
+	"github.com/w-haibara/docker-wrapper/docker"
 )
 
 func (c Client) ContainerRun(ctx context.Context, r Request) error {
@@ -22,14 +22,13 @@ func (c Client) ContainerRun(ctx context.Context, r Request) error {
 		return errors.New("ImageName is needed")
 	}
 
-	resp, err := c.docker.ContainerCreate(ctx, &container.Config{
-		Image: req.ImageName,
-	}, nil, nil, nil, "")
+	cmd := docker.DockerContainerRunCmd(
+		docker.DockerContainerRunOption{Name: &req.ImageName},
+		[]string{},
+	)
+	out, err := ExecCmd(cmd)
+	log.Println("ExecCmd: ContainerRun\n", out)
 	if err != nil {
-		return err
-	}
-
-	if err := c.docker.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
 		return err
 	}
 
@@ -49,7 +48,13 @@ func (c Client) ContainerStart(ctx context.Context, r Request) error {
 		return errors.New("ContainerID is needed")
 	}
 
-	if err := c.docker.ContainerStart(ctx, req.ContainerID, types.ContainerStartOptions{}); err != nil {
+	cmd := docker.DockerContainerStartCmd(
+		docker.DockerContainerStartOption{},
+		[]string{req.ContainerID},
+	)
+	out, err := ExecCmd(cmd)
+	log.Println("ExecCmd: ContainerStart\n", out)
+	if err != nil {
 		return err
 	}
 
@@ -59,7 +64,7 @@ func (c Client) ContainerStart(ctx context.Context, r Request) error {
 func (c Client) ContainerStop(ctx context.Context, r Request) error {
 	type Req struct {
 		ContainerID string
-		Timeout     string
+		Time        string
 	}
 	req := Req{}
 	if err := r.Unmarshal(&req); err != nil {
@@ -70,16 +75,25 @@ func (c Client) ContainerStop(ctx context.Context, r Request) error {
 		return errors.New("ContainerID is needed")
 	}
 
-	var timeout time.Duration
-	if req.Timeout != "" {
-		var err error
-		timeout, err = time.ParseDuration(req.Timeout)
+	time, err := func() (*int, error) {
+		t, err := strconv.Atoi(req.Time)
 		if err != nil {
-			return err
+			return nil, err
 		}
+
+		return &t, nil
+	}()
+	if err != nil {
+		return err
 	}
 
-	if err := c.docker.ContainerStop(ctx, req.ContainerID, &timeout); err != nil {
+	cmd := docker.DockerContainerStopCmd(
+		docker.DockerContainerStopOption{Time: time},
+		[]string{req.ContainerID},
+	)
+	out, err := ExecCmd(cmd)
+	log.Println("ExecCmd: ContainerStop\n", out)
+	if err != nil {
 		return err
 	}
 
@@ -100,14 +114,20 @@ func (c Client) ContainerKill(ctx context.Context, r Request) error {
 		return errors.New("ContainerID is needed")
 	}
 
-	if err := c.docker.ContainerKill(ctx, req.ContainerID, req.Signal); err != nil {
+	cmd := docker.DockerContainerKillCmd(
+		docker.DockerContainerKillOption{Signal: &req.Signal},
+		[]string{req.ContainerID},
+	)
+	out, err := ExecCmd(cmd)
+	log.Println("ExecCmd: ContainerKill\n", out)
+	if err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c Client) ContainerRemove(ctx context.Context, r Request) error {
+func (c Client) ContainerRm(ctx context.Context, r Request) error {
 	type Req struct {
 		ContainerID string
 	}
@@ -120,7 +140,13 @@ func (c Client) ContainerRemove(ctx context.Context, r Request) error {
 		return errors.New("ContainerID is needed")
 	}
 
-	if err := c.docker.ContainerRemove(ctx, req.ContainerID, types.ContainerRemoveOptions{}); err != nil {
+	cmd := docker.DockerContainerRmCmd(
+		docker.DockerContainerRmOption{},
+		[]string{req.ContainerID},
+	)
+	out, err := ExecCmd(cmd)
+	log.Println("ExecCmd: ContainerRm\n", out)
+	if err != nil {
 		return err
 	}
 
